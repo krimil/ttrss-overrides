@@ -1,0 +1,140 @@
+version: '3'
+
+services:
+  db:
+    container_name: ttrss-db
+    depends_on:
+      - cloudflared
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - cloudflared
+
+  app:
+    container_name: ttrss-app
+    depends_on:
+      - cloudflared
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    networks:
+      - cloudflared
+
+  backups:
+    container_name: ttrss-backups
+    depends_on:
+      - cloudflared
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    networks:
+      - cloudflared
+
+  updater:
+    container_name: ttrss-updater
+    depends_on:
+      - cloudflared
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    networks:
+      - cloudflared
+
+  web-nginx:
+    container_name: ttrss-web-nginx
+    depends_on:
+      - cloudflared
+    labels:
+      - com.centurylinklabs.watchtower.enable=false
+    networks:
+      - cloudflared
+
+  tweetledee:
+    image: ghcr.io/krimil/tweetledee-apache:master
+    container_name: tweetledee
+    depends_on:
+      - cloudflared
+    environment:
+      - TWEETLEDEE_CONSUMER_KEY
+      - TWEETLEDEE_CONSUMER_SECRET
+      - TWEETLEDEE_ACCESS_TOKEN
+      - TWEETLEDEE_ACCESS_TOKEN_SECRET
+      - TWEETLEDEE_DOMAIN
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
+    networks:
+      - cloudflared
+    restart: always
+
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TUNNEL_TOKEN}
+    container_name: cloudflared
+    networks:
+      - cloudflared
+    restart: always
+
+  watchtower:
+    image: containrrr/watchtower
+    container_name: watchtower
+    environment:
+      - TZ=${TZ}
+      - WATCHTOWER_NOTIFICATIONS=email
+      - WATCHTOWER_NOTIFICATION_EMAIL_FROM=${SMTP_USER}
+      - WATCHTOWER_NOTIFICATION_EMAIL_TO=${WATCHTOWER_NOTIFICATION_EMAIL_TO}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER=${SMTP_HOST}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PORT=${SMTP_PORT}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_USER=${SMTP_USER}
+      - WATCHTOWER_NOTIFICATION_EMAIL_SERVER_PASSWORD=${SMTP_PASS}
+      - WATCHTOWER_SCHEDULE=${WATCHTOWER_SCHEDULE}
+    hostname: ttrss-docker
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+
+  daily-backups:
+    image: ghcr.io/krimil/ttrss-db-backup:master
+    container_name: daily-backups
+    depends_on:
+      - ttrss-db
+    environment:
+      - TZ
+      - BACKUP_DAYS
+      - BACKUP_RCLONE_DEST
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - daily-backups:/backups
+      - rclone-config:/config
+      - $PWD:/ttrss-docker
+
+networks:
+  cloudflared:
+
+volumes:
+  app:
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/../tt-rss/app
+  
+  backups:
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/../tt-rss/backups
+
+  daily-backups:
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/../backups
+
+  db:
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/../tt-rss/db
+
+  rclone-config:
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/../rclone
