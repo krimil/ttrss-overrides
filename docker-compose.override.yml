@@ -64,7 +64,7 @@ services:
     restart: always
 
   cloudflared:
-    image: cloudflare/cloudflared:latest
+    image: ghcr.io/milgradesec/cloudflared:latest
     command: tunnel --no-autoupdate run --token ${CLOUDFLARED_TUNNEL_TOKEN}
     container_name: cloudflared
     networks:

@@ -8,7 +8,11 @@ git clone https://git.tt-rss.org/fox/ttrss-docker-compose.git ttrss-docker
 
 ## Clone this repo to ttrss-docker folder
 ```
-https://github.com/krimil/ttrss-overrides.git ttrss-docker
+git clone https://github.com/krimil/ttrss-overrides.git ttrss-overrides
+```
+
+```
+cp ttrss-overrides/docker-compose.override.yml ttrss-docker/
 ```
 
 Copy .env-dist to .env
