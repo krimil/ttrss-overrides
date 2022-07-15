@@ -93,7 +93,7 @@ services:
     image: ghcr.io/krimil/ttrss-db-backup:master
     container_name: daily-backups
     depends_on:
-      - ttrss-db
+      - db
     environment:
       - TZ
       - BACKUP_DAYS
