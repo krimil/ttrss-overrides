@@ -23,8 +23,11 @@ mkdir -p tt-rss/app
 mkdir -p tt-rss/backups
 mkdir -p tt-rss/db
 mkdir backups
+mkdir nitter
+mkdir nitter-redis
 mkdir rclone
 ```
+Create nitter.conf file in ~/nitter
 
 Create rclone.conf file in ~/rclone
 
