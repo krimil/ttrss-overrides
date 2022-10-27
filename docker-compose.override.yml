@@ -45,23 +45,41 @@ services:
       - com.centurylinklabs.watchtower.enable=false
     networks:
       - cloudflared
-
-  tweetledee:
-    image: ghcr.io/krimil/tweetledee-apache:master
-    container_name: tweetledee
+  
+  nitter:
+    image: quay.io/unixfox/nitter:latest
+    container_name: nitter
+    ports:
+      # - "127.0.0.1:8080:8080" # Replace with "8080:8080" if you don't use a reverse proxy
+      - "8080:8080"
+    volumes:
+      - ../nitter/nitter.conf:/src/nitter.conf:ro
     depends_on:
       - cloudflared
-    environment:
-      - TWEETLEDEE_CONSUMER_KEY
-      - TWEETLEDEE_CONSUMER_SECRET
-      - TWEETLEDEE_ACCESS_TOKEN
-      - TWEETLEDEE_ACCESS_TOKEN_SECRET
-      - TWEETLEDEE_DOMAIN
+      - nitter-redis
+    restart: unless-stopped
+    healthcheck:
+      test: wget -nv --tries=1 --spider http://127.0.0.1:8080/Jack/status/20 || exit 1
+      interval: 30s
+      timeout: 5s
+      retries: 2
     labels:
       - com.centurylinklabs.watchtower.enable=true
     networks:
       - cloudflared
-    restart: always
+
+  nitter-redis:
+    image: redis:6-alpine
+    container_name: nitter-redis
+    command: redis-server --save 60 1 --loglevel warning
+    volumes:
+      - nitter-redis:/data
+    restart: unless-stopped
+    healthcheck:
+      test: redis-cli ping
+      interval: 30s
+      timeout: 5s
+      retries: 2
 
   cloudflared:
     image: cloudflare/cloudflared:latest
@@ -132,6 +150,12 @@ volumes:
       type: none
       o: bind
       device: $PWD/../tt-rss/db
+      
+  nitter-redis:
+    driver_opts:
+      type: none
+      o: bind
+      device: $PWD/../nitter-redis
 
   rclone-config:
     driver_opts:
