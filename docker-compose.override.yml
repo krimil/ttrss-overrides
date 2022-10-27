@@ -45,18 +45,17 @@ services:
       - com.centurylinklabs.watchtower.enable=false
     networks:
       - cloudflared
-  
+
   nitter:
     image: quay.io/unixfox/nitter:latest
     container_name: nitter
-    ports:
-      # - "127.0.0.1:8080:8080" # Replace with "8080:8080" if you don't use a reverse proxy
-      - "8080:8080"
     volumes:
-      - ../nitter/nitter.conf:/src/nitter.conf:ro
+      - $PWD/../nitter:/data
     depends_on:
       - cloudflared
       - nitter-redis
+    environment:
+      - REDIS_HOST="nitter-redis"
     restart: unless-stopped
     healthcheck:
       test: wget -nv --tries=1 --spider http://127.0.0.1:8080/Jack/status/20 || exit 1
@@ -80,6 +79,8 @@ services:
       interval: 30s
       timeout: 5s
       retries: 2
+    labels:
+      - com.centurylinklabs.watchtower.enable=true
     networks:
       - cloudflared
 
@@ -152,7 +153,7 @@ volumes:
       type: none
       o: bind
       device: $PWD/../tt-rss/db
-      
+
   nitter-redis:
     driver_opts:
       type: none
