@@ -1,11 +1,11 @@
 [Server]
 address = "0.0.0.0"
 port = 80
-https = false  # disable to enable cookies when not using https
+https = true  # disable to enable cookies when not using https
 httpMaxConnections = 100
 staticDir = "./public"
 title = "nitter"
-hostname = "nitter"
+hostname = "nitter.krismillikan.com"
 
 [Cache]
 listMinutes = 240  # how long to cache list info (not the tweets, so keep it high)
